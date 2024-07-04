@@ -1,0 +1,18 @@
+name: "Konvu SCA"
+description: "Runs Konvu SCA on your codebase within a github action"
+runs:
+  using: node20
+  main: dist/index.js
+inputs:
+  konvu-token:
+    description: "Konvu API token"
+    required: true
+  konvu-app-name:
+    description: "Konvu app name"
+  path:
+    description: "Relative path to the codebase from GITHUB_WORKSPACE"
+  konvu-version:
+    description: "Konvu version"
+    default: "latest"
+  konvu-alpha-dl-secret:
+    description: "Konvu alpha download secret"
