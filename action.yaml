@@ -1,0 +1,12 @@
+name: "Konvu SCA"
+description: "Runs Konvu SCA on your codebase within a github action"
+runs:
+  using: "composite"
+  steps:
+    - name: Fetch analyzer
+      run: echo "Fetching analyzer"
+      shell: bash
+
+    - name: Run analyzer
+      run: echo "Running analyzer"
+      shell: bash
