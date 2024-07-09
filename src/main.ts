@@ -4,8 +4,11 @@ import * as tc from "@actions/tool-cache";
 import * as exec from "@actions/exec";
 import * as github from "@actions/github";
 import * as path from "path";
+import * as fs from "node:fs/promises";
+import * as os from "node:os";
 
 const ghToken = process.env.GITHUB_TOKEN;
+export const gh = github.getOctokit(ghToken!);
 const konvuToken = process.env.KONVU_TOKEN || core.getInput("konvu-token");
 const konvuAppName =
   process.env.KONVU_APP_NAME || core.getInput("konvu-app-name");
@@ -28,6 +31,12 @@ function workspaceDirectory() {
   return repositoryPath;
 }
 
+export async function download(url: string) {
+  await tc.downloadTool(url, "/tmp/konvu-sca.zip", `Bearer ${ghToken}`, {
+    accept: "application/octet-stream",
+  });
+}
+
 export async function run(): Promise<void> {
   try {
     core.startGroup("Setting up konvu-sca");
@@ -42,29 +51,43 @@ export async function run(): Promise<void> {
     if (!latest) {
       return;
     }
+    const archiveFolder = await fs.mkdtemp(
+      path.join(os.tmpdir(), "konvu-sca-archive-"),
+    );
+    const dstFolder = await fs.mkdtemp(path.join(os.tmpdir(), "konvu-sca-"));
+
     try {
+      const asset = await gh.rest.repos.getReleaseAsset({
+        owner: "KonvuTeam",
+        repo: "konvu-static-analysis",
+        asset_id: latest.id,
+      });
+      let dstArchive = path.join(archiveFolder, asset.data.name);
       if (process.platform === "win32") {
         const konvuZip = await tc.downloadTool(
           latest.url,
-          "/tmp/konvu-sca.zip",
+          dstArchive,
           `Bearer ${ghToken}`,
+          { accept: asset.data.content_type },
         );
-        await tc.extractZip(konvuZip, "/tmp/konvu-sca");
+        await tc.extractZip(konvuZip, dstFolder);
       } else {
         const konvuTgz = await tc.downloadTool(
           latest.url,
-          "/tmp/konvu-sca.tar.gz",
+          dstArchive,
           `Bearer ${ghToken}`,
+          { accept: asset.data.content_type },
         );
-        await tc.extractTar(konvuTgz, "/tmp/konvu-sca");
+        await tc.extractTar(konvuTgz, dstFolder);
       }
     } catch (error: any) {
       core.setFailed(
-        `Failed to download and extract konvu-sca ${error.message} ${ghToken}`,
+        `Failed to download and extract konvu-sca ${error.message} ${ghToken}\n${latest.url}`,
       );
       return;
     }
-    core.addPath("/tmp/konvu-sca");
+
+    core.addPath(dstFolder);
     core.endGroup();
     core.info("Running konvu-sca on the project");
     exec.exec("konvu-sca", [workspaceDirectory()], {
@@ -113,7 +136,7 @@ export async function getLatestAssetForCurrentArch(): Promise<any | undefined> {
   }
 
   try {
-    const releases = await github.getOctokit(ghToken!).rest.repos.listReleases({
+    const releases = await gh.rest.repos.listReleases({
       owner: "KonvuTeam",
       repo: "konvu-static-analysis",
     });

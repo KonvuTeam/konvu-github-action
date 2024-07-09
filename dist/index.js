@@ -35418,6 +35418,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.gh = void 0;
+exports.download = download;
 exports.run = run;
 exports.getLatestAssetForCurrentArch = getLatestAssetForCurrentArch;
 const core = __importStar(__nccwpck_require__(2186));
@@ -35426,7 +35428,10 @@ const tc = __importStar(__nccwpck_require__(7784));
 const exec = __importStar(__nccwpck_require__(1514));
 const github = __importStar(__nccwpck_require__(5438));
 const path = __importStar(__nccwpck_require__(1017));
+const fs = __importStar(__nccwpck_require__(3977));
+const os = __importStar(__nccwpck_require__(612));
 const ghToken = process.env.GITHUB_TOKEN;
+exports.gh = github.getOctokit(ghToken);
 const konvuToken = process.env.KONVU_TOKEN || core.getInput("konvu-token");
 const konvuAppName = process.env.KONVU_APP_NAME || core.getInput("konvu-app-name");
 const ghClient = axios_1.default.create({
@@ -35443,6 +35448,13 @@ function workspaceDirectory() {
     repositoryPath = path.resolve(githubWorkspacePath, repositoryPath);
     return repositoryPath;
 }
+function download(url) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield tc.downloadTool(url, "/tmp/konvu-sca.zip", `Bearer ${ghToken}`, {
+            accept: "application/octet-stream",
+        });
+    });
+}
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -35455,21 +35467,29 @@ function run() {
             if (!latest) {
                 return;
             }
+            const archiveFolder = yield fs.mkdtemp(path.join(os.tmpdir(), "konvu-sca-archive-"));
+            const dstFolder = yield fs.mkdtemp(path.join(os.tmpdir(), "konvu-sca-"));
             try {
+                const asset = yield exports.gh.rest.repos.getReleaseAsset({
+                    owner: "KonvuTeam",
+                    repo: "konvu-static-analysis",
+                    asset_id: latest.id,
+                });
+                let dstArchive = path.join(archiveFolder, asset.data.name);
                 if (process.platform === "win32") {
-                    const konvuZip = yield tc.downloadTool(latest.url, "/tmp/konvu-sca.zip", `Bearer ${ghToken}`);
-                    yield tc.extractZip(konvuZip, "/tmp/konvu-sca");
+                    const konvuZip = yield tc.downloadTool(latest.url, dstArchive, `Bearer ${ghToken}`, { accept: asset.data.content_type });
+                    yield tc.extractZip(konvuZip, dstFolder);
                 }
                 else {
-                    const konvuTgz = yield tc.downloadTool(latest.url, "/tmp/konvu-sca.tar.gz", `Bearer ${ghToken}`);
-                    yield tc.extractTar(konvuTgz, "/tmp/konvu-sca");
+                    const konvuTgz = yield tc.downloadTool(latest.url, dstArchive, `Bearer ${ghToken}`, { accept: asset.data.content_type });
+                    yield tc.extractTar(konvuTgz, dstFolder);
                 }
             }
             catch (error) {
-                core.setFailed(`Failed to download and extract konvu-sca ${error.message} ${ghToken}`);
+                core.setFailed(`Failed to download and extract konvu-sca ${error.message} ${ghToken}\n${latest.url}`);
                 return;
             }
-            core.addPath("/tmp/konvu-sca");
+            core.addPath(dstFolder);
             core.endGroup();
             core.info("Running konvu-sca on the project");
             exec.exec("konvu-sca", [workspaceDirectory()], {
@@ -35518,7 +35538,7 @@ function getLatestAssetForCurrentArch() {
             return;
         }
         try {
-            const releases = yield github.getOctokit(ghToken).rest.repos.listReleases({
+            const releases = yield exports.gh.rest.repos.listReleases({
                 owner: "KonvuTeam",
                 repo: "konvu-static-analysis",
             });
@@ -35652,6 +35672,22 @@ module.exports = require("net");
 
 "use strict";
 module.exports = require("node:events");
+
+/***/ }),
+
+/***/ 3977:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:fs/promises");
+
+/***/ }),
+
+/***/ 612:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:os");
 
 /***/ }),
 
