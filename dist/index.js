@@ -31152,16 +31152,30 @@ const core = __importStar(__nccwpck_require__(2186));
 const axios_1 = __importDefault(__nccwpck_require__(8757));
 const tc = __importStar(__nccwpck_require__(7784));
 const exec = __importStar(__nccwpck_require__(1514));
+const path = __importStar(__nccwpck_require__(1017));
 const ghToken = process.env.GITHUB_TOKEN;
-const konvuToken = process.env.KONVU_TOKEN;
+const konvuToken = process.env.KONVU_TOKEN || core.getInput("konvu-token");
+const konvuAppName = process.env.KONVU_APP_NAME || core.getInput("konvu-app-name");
 const ghClient = axios_1.default.create({
     headers: { Authorization: `Bearer ${ghToken}` },
 });
+function workspaceDirectory() {
+    // GitHub workspace
+    let githubWorkspacePath = process.env["GITHUB_WORKSPACE"];
+    if (!githubWorkspacePath) {
+        throw new Error("GITHUB_WORKSPACE not defined");
+    }
+    githubWorkspacePath = path.resolve(githubWorkspacePath);
+    let repositoryPath = core.getInput("path") || ".";
+    repositoryPath = path.resolve(githubWorkspacePath, repositoryPath);
+    return repositoryPath;
+}
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            core.startGroup("Setting up konvu-sca");
             if (konvuToken === undefined || konvuToken === "") {
-                core.setFailed("KONVU_TOKEN is not set");
+                core.setFailed("Konvu token is required, you may set it as KONVU_TOKEN env variable or konvu-token action input");
                 return;
             }
             const latest = yield getLatestAssetForCurrentArch();
@@ -31170,15 +31184,19 @@ function run() {
                 return;
             }
             if (process.platform === "win32") {
-                const konvuZip = yield tc.downloadTool(latest.url, "/tmp/konvu-sca.zip", `Bearer ${konvuToken}`);
+                const konvuZip = yield tc.downloadTool(latest.url, "/tmp/konvu-sca.zip", `Bearer ${ghToken}`);
                 yield tc.extractZip(konvuZip, "/tmp/konvu-sca");
             }
             else {
-                const konvuTgz = yield tc.downloadTool(latest.url, "/tmp/konvu-sca.", `Bearer ${konvuToken}`);
+                const konvuTgz = yield tc.downloadTool(latest.url, "/tmp/konvu-sca.", `Bearer ${ghToken}`);
                 yield tc.extractTar(konvuTgz, "/tmp/konvu-sca");
             }
             core.addPath("/tmp/konvu-sca");
-            exec.exec("konvu-sca");
+            core.endGroup();
+            core.info("Running konvu-sca on the project");
+            exec.exec("konvu-sca", [workspaceDirectory()], {
+                env: { KONVU_APP_NAME: konvuAppName, KONVU_TOKEN: konvuToken },
+            });
         }
         catch (error) {
             core.setFailed(error.message);
