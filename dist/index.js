@@ -35461,7 +35461,7 @@ function run() {
                     yield tc.extractZip(konvuZip, "/tmp/konvu-sca");
                 }
                 else {
-                    const konvuTgz = yield tc.downloadTool(latest.url, "/tmp/konvu-sca.", `Bearer ${ghToken}`);
+                    const konvuTgz = yield tc.downloadTool(latest.url, "/tmp/konvu-sca.tar.gz", `Bearer ${ghToken}`);
                     yield tc.extractTar(konvuTgz, "/tmp/konvu-sca");
                 }
             }
@@ -35518,9 +35518,7 @@ function getLatestAssetForCurrentArch() {
             return;
         }
         try {
-            const releases = yield github
-                .getOctokit(ghToken)
-                .rest.repos.listReleases({
+            const releases = yield github.getOctokit(ghToken).rest.repos.listReleases({
                 owner: "KonvuTeam",
                 repo: "konvu-static-analysis",
             });

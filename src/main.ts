@@ -53,7 +53,7 @@ export async function run(): Promise<void> {
       } else {
         const konvuTgz = await tc.downloadTool(
           latest.url,
-          "/tmp/konvu-sca.",
+          "/tmp/konvu-sca.tar.gz",
           `Bearer ${ghToken}`,
         );
         await tc.extractTar(konvuTgz, "/tmp/konvu-sca");
@@ -113,12 +113,10 @@ export async function getLatestAssetForCurrentArch(): Promise<any | undefined> {
   }
 
   try {
-    const releases = await github
-      .getOctokit(ghToken!)
-      .rest.repos.listReleases({
-        owner: "KonvuTeam",
-        repo: "konvu-static-analysis",
-      });
+    const releases = await github.getOctokit(ghToken!).rest.repos.listReleases({
+      owner: "KonvuTeam",
+      repo: "konvu-static-analysis",
+    });
 
     const latestRelease = releases.data[0];
 
