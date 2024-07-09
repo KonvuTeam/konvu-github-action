@@ -43,24 +43,25 @@ export async function run(): Promise<void> {
       return;
     }
     try {
-
       if (process.platform === "win32") {
         const konvuZip = await tc.downloadTool(
-            latest.url,
-            "/tmp/konvu-sca.zip",
-            `Bearer ${ghToken}`,
+          latest.url,
+          "/tmp/konvu-sca.zip",
+          `Bearer ${ghToken}`,
         );
         await tc.extractZip(konvuZip, "/tmp/konvu-sca");
       } else {
         const konvuTgz = await tc.downloadTool(
-            latest.url,
-            "/tmp/konvu-sca.",
-            `Bearer ${ghToken}`,
+          latest.url,
+          "/tmp/konvu-sca.",
+          `Bearer ${ghToken}`,
         );
         await tc.extractTar(konvuTgz, "/tmp/konvu-sca");
       }
     } catch (error: any) {
-      core.setFailed(`Failed to download and extract konvu-sca ${error.message} ${ghToken}`);
+      core.setFailed(
+        `Failed to download and extract konvu-sca ${error.message} ${ghToken}`,
+      );
       return;
     }
     core.addPath("/tmp/konvu-sca");
@@ -112,12 +113,17 @@ export async function getLatestAssetForCurrentArch(): Promise<any | undefined> {
   }
 
   try {
-    const releases = await github.getOctokit(ghToken!).rest.repos.listReleases({owner: "KonvuTeam", repo: "konvu-static-analysis"})
+    const releases = await github
+      .getOctokit(ghToken!)
+      .rest.repos.listReleases({
+        owner: "KonvuTeam",
+        repo: "konvu-static-analysis",
+      });
 
     const latestRelease = releases.data[0];
 
     return latestRelease.assets.find((asset: any) =>
-        asset.name.includes(platArch),
+      asset.name.includes(platArch),
     );
   } catch (error: any) {
     core.setFailed(`Failed to list releases ${error.message} ${ghToken}`);
