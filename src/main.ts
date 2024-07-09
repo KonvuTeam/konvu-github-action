@@ -33,6 +33,7 @@ export async function run(): Promise<void> {
     //   core.setFailed("Konvu token is required, you may set it as KONVU_TOKEN env variable or konvu-token action input");
     //   return;
     // }
+
     const latest = await getLatestAssetForCurrentArch();
     if (!latest) {
       core.setFailed("Failed to fetch latest release");
