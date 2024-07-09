@@ -1,0 +1,41 @@
+{
+  "name": "konvu-github-action",
+  "version": "0.0.1",
+  "description": "Konvu Static Analyzer github action",
+  "scripts": {
+    "bundle": "npm run format:write && npm run package",
+    "format:write": "npx prettier --write .",
+    "format:check": "npx prettier --check .",
+    "package": "npx ncc build src/index.ts -o dist --source-map --license licenses.txt",
+    "package:watch": "npm run package -- --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "main": "src/index.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KonvuTeam/konvu-github-action.git"
+  },
+  "author": "Konvu Team",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/KonvuTeam/konvu-github-action/issues"
+  },
+  "homepage": "https://github.com/KonvuTeam/konvu-github-action#readme",
+  "dependencies": {
+    "@actions/core": "^1.10.1",
+    "@actions/exec": "^1.1.1",
+    "@actions/github": "^6.0.0",
+    "@actions/tool-cache": "^2.0.1",
+    "axios": "^1.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "@vercel/ncc": "^0.38.1",
+    "prettier": "^3.3.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.3"
+  }
+}

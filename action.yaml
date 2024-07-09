@@ -1,12 +1,13 @@
 name: "Konvu SCA"
 description: "Runs Konvu SCA on your codebase within a github action"
 runs:
-  using: "composite"
-  steps:
-    - name: Fetch analyzer
-      run: echo "Fetching analyzer"
-      shell: bash
-
-    - name: Run analyzer
-      run: echo "Running analyzer"
-      shell: bash
+  using: node20
+  main: dist/index.js
+inputs:
+  konvu-token:
+    description: "Konvu API token"
+    required: true
+  konvu-app-name:
+    description: "Konvu app name"
+  path:
+    description: "Relative path to the codebase from GITHUB_WORKSPACE"
