@@ -2,6 +2,7 @@ import * as core from "@actions/core";
 import axios from "axios";
 import * as tc from "@actions/tool-cache";
 import * as exec from "@actions/exec";
+import * as github from "@actions/github";
 import * as path from "path";
 
 const ghToken = process.env.GITHUB_TOKEN;
@@ -39,23 +40,28 @@ export async function run(): Promise<void> {
 
     const latest = await getLatestAssetForCurrentArch();
     if (!latest) {
-      core.setFailed("Failed to fetch latest release");
       return;
     }
-    if (process.platform === "win32") {
-      const konvuZip = await tc.downloadTool(
-        latest.url,
-        "/tmp/konvu-sca.zip",
-        `Bearer ${ghToken}`,
-      );
-      await tc.extractZip(konvuZip, "/tmp/konvu-sca");
-    } else {
-      const konvuTgz = await tc.downloadTool(
-        latest.url,
-        "/tmp/konvu-sca.",
-        `Bearer ${ghToken}`,
-      );
-      await tc.extractTar(konvuTgz, "/tmp/konvu-sca");
+    try {
+
+      if (process.platform === "win32") {
+        const konvuZip = await tc.downloadTool(
+            latest.url,
+            "/tmp/konvu-sca.zip",
+            `Bearer ${ghToken}`,
+        );
+        await tc.extractZip(konvuZip, "/tmp/konvu-sca");
+      } else {
+        const konvuTgz = await tc.downloadTool(
+            latest.url,
+            "/tmp/konvu-sca.",
+            `Bearer ${ghToken}`,
+        );
+        await tc.extractTar(konvuTgz, "/tmp/konvu-sca");
+      }
+    } catch (error: any) {
+      core.setFailed(`Failed to download and extract konvu-sca ${error.message} ${ghToken}`);
+      return;
     }
     core.addPath("/tmp/konvu-sca");
     core.endGroup();
@@ -101,16 +107,20 @@ function beautifulPlatformAndArch(): string | undefined {
 export async function getLatestAssetForCurrentArch(): Promise<any | undefined> {
   const platArch = beautifulPlatformAndArch();
   if (!platArch) {
-    console.log("Unsupported platform or architecture");
+    core.setFailed("Unsupported platform or architecture");
     return;
   }
 
-  const { data } = await ghClient.get(
-    "https://api.github.com/repos/KonvuTeam/konvu-static-analysis/releases",
-  );
+  try {
+    const releases = await github.getOctokit(ghToken!).rest.repos.listReleases({owner: "KonvuTeam", repo: "konvu-static-analysis"})
 
-  const latestRelease = data[0];
-  return latestRelease.assets.find((asset: any) =>
-    asset.name.includes(platArch),
-  );
+    const latestRelease = releases.data[0];
+
+    return latestRelease.assets.find((asset: any) =>
+        asset.name.includes(platArch),
+    );
+  } catch (error: any) {
+    core.setFailed(`Failed to list releases ${error.message} ${ghToken}`);
+    return;
+  }
 }
