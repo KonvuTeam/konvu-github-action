@@ -1,21 +1,15 @@
 import * as core from "@actions/core";
-import axios from "axios";
 import * as tc from "@actions/tool-cache";
 import * as exec from "@actions/exec";
-import * as github from "@actions/github";
 import * as path from "path";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 
-const ghToken = process.env.GITHUB_TOKEN;
-export const gh = github.getOctokit(ghToken!);
 const konvuToken = process.env.KONVU_TOKEN || core.getInput("konvu-token");
 const konvuAppName =
   process.env.KONVU_APP_NAME || core.getInput("konvu-app-name");
-
-const ghClient = axios.create({
-  headers: { Authorization: `Bearer ${ghToken}` },
-});
+const konvuVersion =
+  process.env.KONVU_VERSION || core.getInput("konvu-version") || "latest";
 
 function workspaceDirectory() {
   // GitHub workspace
@@ -31,12 +25,6 @@ function workspaceDirectory() {
   return repositoryPath;
 }
 
-export async function download(url: string) {
-  await tc.downloadTool(url, "/tmp/konvu-sca.zip", `Bearer ${ghToken}`, {
-    accept: "application/octet-stream",
-  });
-}
-
 export async function run(): Promise<void> {
   try {
     core.startGroup("Setting up konvu-sca");
@@ -47,42 +35,37 @@ export async function run(): Promise<void> {
       return;
     }
 
-    const latest = await getLatestAssetForCurrentArch();
-    if (!latest) {
+    const platArch = beautifulPlatformAndArch();
+    if (!platArch) {
+      core.setFailed("Unsupported platform or architecture");
       return;
     }
+
+    const extension = process.platform === "win32" ? "zip" : "tar.gz";
+
+    const url = `https://konvu-staging-download.s3.eu-west-1.amazonaws.com/konvu-sca/${konvuVersion}/konvu-static-analysis_${platArch}.${extension}`;
+
     const archiveFolder = await fs.mkdtemp(
       path.join(os.tmpdir(), "konvu-sca-archive-"),
     );
     const dstFolder = await fs.mkdtemp(path.join(os.tmpdir(), "konvu-sca-"));
 
     try {
-      const asset = await gh.rest.repos.getReleaseAsset({
-        owner: "KonvuTeam",
-        repo: "konvu-static-analysis",
-        asset_id: latest.id,
-      });
-      let dstArchive = path.join(archiveFolder, asset.data.name);
+      let dstArchive = path.join(archiveFolder, `konvu-sca.${extension}`);
       if (process.platform === "win32") {
-        const konvuZip = await tc.downloadTool(
-          latest.url,
-          dstArchive,
-          `Bearer ${ghToken}`,
-          { accept: asset.data.content_type },
-        );
+        const konvuZip = await tc.downloadTool(url, dstArchive, undefined, {
+          accept: "application/octet-stream",
+        });
         await tc.extractZip(konvuZip, dstFolder);
       } else {
-        const konvuTgz = await tc.downloadTool(
-          latest.url,
-          dstArchive,
-          `Bearer ${ghToken}`,
-          { accept: asset.data.content_type },
-        );
+        const konvuTgz = await tc.downloadTool(url, dstArchive, undefined, {
+          accept: "application/octet-stream",
+        });
         await tc.extractTar(konvuTgz, dstFolder);
       }
     } catch (error: any) {
       core.setFailed(
-        `Failed to download and extract konvu-sca ${error.message} ${ghToken}\n${latest.url}`,
+        `Failed to download and extract konvu-sca ${error.message}\n${url}`,
       );
       return;
     }
@@ -125,29 +108,4 @@ function beautifulPlatformAndArch(): string | undefined {
       return;
   }
   return `${platform}_${arch}`;
-}
-
-// TODO fetch this from the backend
-export async function getLatestAssetForCurrentArch(): Promise<any | undefined> {
-  const platArch = beautifulPlatformAndArch();
-  if (!platArch) {
-    core.setFailed("Unsupported platform or architecture");
-    return;
-  }
-
-  try {
-    const releases = await gh.rest.repos.listReleases({
-      owner: "KonvuTeam",
-      repo: "konvu-static-analysis",
-    });
-
-    const latestRelease = releases.data[0];
-
-    return latestRelease.assets.find((asset: any) =>
-      asset.name.includes(platArch),
-    );
-  } catch (error: any) {
-    core.setFailed(`Failed to list releases ${error.message} ${ghToken}`);
-    return;
-  }
 }

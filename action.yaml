@@ -11,3 +11,6 @@ inputs:
     description: "Konvu app name"
   path:
     description: "Relative path to the codebase from GITHUB_WORKSPACE"
+  konvu-version:
+    description: "Konvu version"
+    default: "latest"
