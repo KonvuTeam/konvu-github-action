@@ -28825,7 +28825,7 @@ const fs = __importStar(__nccwpck_require__(3977));
 const os = __importStar(__nccwpck_require__(612));
 const konvuToken = process.env.KONVU_TOKEN || core.getInput("konvu-token");
 const konvuAppName = process.env.KONVU_APP_NAME || core.getInput("konvu-app-name");
-const konvuVersion = process.env.KONVU_VERSION || core.getInput("konvu-version") || "latest";
+const konvuVersion = process.env.KONVU_VERSION || core.getInput("konvu-version");
 const konvuAlphaDownloadSecret = process.env.KONVU_ALPHA_DL_SECRET || core.getInput("konvu-alpha-dl-secret");
 function workspaceDirectory() {
     // GitHub workspace
@@ -28862,17 +28862,16 @@ function run() {
             const dstFolder = yield fs.mkdtemp(path.join(os.tmpdir(), "konvu-sca-"));
             try {
                 let dstArchive = path.join(archiveFolder, `konvu-sca.${extension}`);
+                core.info(`Downloading konvu-sca from ${url}`);
                 if (process.platform === "win32") {
-                    const konvuZip = yield tc.downloadTool(url, dstArchive, undefined, {
+                    const konvuZip = yield tc.downloadTool(url, dstArchive, `Basic ${konvuAlphaDownloadSecret}`, {
                         accept: "application/octet-stream",
-                        authorization: `Basic ${konvuAlphaDownloadSecret}`,
                     });
                     yield tc.extractZip(konvuZip, dstFolder);
                 }
                 else {
-                    const konvuTgz = yield tc.downloadTool(url, dstArchive, undefined, {
+                    const konvuTgz = yield tc.downloadTool(url, dstArchive, `Basic ${konvuAlphaDownloadSecret}`, {
                         accept: "application/octet-stream",
-                        authorization: `Basic ${konvuAlphaDownloadSecret}`,
                     });
                     yield tc.extractTar(konvuTgz, dstFolder);
                 }
