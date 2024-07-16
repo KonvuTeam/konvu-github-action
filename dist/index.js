@@ -28851,7 +28851,7 @@ function run() {
                 return;
             }
             const extension = process.platform === "win32" ? "zip" : "tar.gz";
-            const url = `https://konvu-staging-download.s3.eu-west-1.amazonaws.com/konvu-sca/${konvuVersion}/konvu-static-analysis_${platArch}.${extension}`;
+            const url = `https://download.staging.konvu.com/konvu-sca/${konvuVersion}/konvu-static-analysis_${platArch}.${extension}`;
             const archiveFolder = yield fs.mkdtemp(path.join(os.tmpdir(), "konvu-sca-archive-"));
             const dstFolder = yield fs.mkdtemp(path.join(os.tmpdir(), "konvu-sca-"));
             try {
