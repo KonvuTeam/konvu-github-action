@@ -9,7 +9,7 @@ const konvuToken = process.env.KONVU_TOKEN || core.getInput("konvu-token");
 const konvuAppName =
   process.env.KONVU_APP_NAME || core.getInput("konvu-app-name");
 const konvuVersion =
-  process.env.KONVU_VERSION || core.getInput("konvu-version") || "latest";
+  process.env.KONVU_VERSION || core.getInput("konvu-version");
 const konvuAlphaDownloadSecret =
   process.env.KONVU_ALPHA_DL_SECRET || core.getInput("konvu-alpha-dl-secret");
 
@@ -64,16 +64,16 @@ export async function run(): Promise<void> {
 
     try {
       let dstArchive = path.join(archiveFolder, `konvu-sca.${extension}`);
+      core.info(`Downloading konvu-sca from ${url}`)
+
       if (process.platform === "win32") {
-        const konvuZip = await tc.downloadTool(url, dstArchive, undefined, {
+        const konvuZip = await tc.downloadTool(url, dstArchive, `Basic ${konvuAlphaDownloadSecret}`, {
           accept: "application/octet-stream",
-          authorization: `Basic ${konvuAlphaDownloadSecret}`,
         });
         await tc.extractZip(konvuZip, dstFolder);
       } else {
-        const konvuTgz = await tc.downloadTool(url, dstArchive, undefined, {
+        const konvuTgz = await tc.downloadTool(url, dstArchive, `Basic ${konvuAlphaDownloadSecret}`, {
           accept: "application/octet-stream",
-          authorization: `Basic ${konvuAlphaDownloadSecret}`,
         });
         await tc.extractTar(konvuTgz, dstFolder);
       }
