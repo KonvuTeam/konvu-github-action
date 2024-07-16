@@ -64,17 +64,27 @@ export async function run(): Promise<void> {
 
     try {
       let dstArchive = path.join(archiveFolder, `konvu-sca.${extension}`);
-      core.info(`Downloading konvu-sca from ${url}`)
+      core.info(`Downloading konvu-sca from ${url}`);
 
       if (process.platform === "win32") {
-        const konvuZip = await tc.downloadTool(url, dstArchive, `Basic ${konvuAlphaDownloadSecret}`, {
-          accept: "application/octet-stream",
-        });
+        const konvuZip = await tc.downloadTool(
+          url,
+          dstArchive,
+          `Basic ${konvuAlphaDownloadSecret}`,
+          {
+            accept: "application/octet-stream",
+          },
+        );
         await tc.extractZip(konvuZip, dstFolder);
       } else {
-        const konvuTgz = await tc.downloadTool(url, dstArchive, `Basic ${konvuAlphaDownloadSecret}`, {
-          accept: "application/octet-stream",
-        });
+        const konvuTgz = await tc.downloadTool(
+          url,
+          dstArchive,
+          `Basic ${konvuAlphaDownloadSecret}`,
+          {
+            accept: "application/octet-stream",
+          },
+        );
         await tc.extractTar(konvuTgz, dstFolder);
       }
     } catch (error: any) {
