@@ -28826,6 +28826,7 @@ const os = __importStar(__nccwpck_require__(612));
 const konvuToken = process.env.KONVU_TOKEN || core.getInput("konvu-token");
 const konvuAppName = process.env.KONVU_APP_NAME || core.getInput("konvu-app-name");
 const konvuVersion = process.env.KONVU_VERSION || core.getInput("konvu-version") || "latest";
+const konvuAlphaDownloadSecret = process.env.KONVU_ALPHA_DL_SECRET || core.getInput("konvu-alpha-dl-secret");
 function workspaceDirectory() {
     // GitHub workspace
     let githubWorkspacePath = process.env["GITHUB_WORKSPACE"];
@@ -28850,6 +28851,11 @@ function run() {
                 core.setFailed("Unsupported platform or architecture");
                 return;
             }
+            if (konvuAlphaDownloadSecret === undefined ||
+                konvuAlphaDownloadSecret === "") {
+                core.setFailed("konvu-alpha-dl-secret is required, you may set it as KONVU_ALPHA_DL_SECRET env variable or konvu-alpha-dl-secret action input");
+                return;
+            }
             const extension = process.platform === "win32" ? "zip" : "tar.gz";
             const url = `https://konvu-staging-download.s3.eu-west-1.amazonaws.com/konvu-sca/${konvuVersion}/konvu-static-analysis_${platArch}.${extension}`;
             const archiveFolder = yield fs.mkdtemp(path.join(os.tmpdir(), "konvu-sca-archive-"));
@@ -28859,12 +28865,14 @@ function run() {
                 if (process.platform === "win32") {
                     const konvuZip = yield tc.downloadTool(url, dstArchive, undefined, {
                         accept: "application/octet-stream",
+                        authorization: `Basic ${konvuAlphaDownloadSecret}`,
                     });
                     yield tc.extractZip(konvuZip, dstFolder);
                 }
                 else {
                     const konvuTgz = yield tc.downloadTool(url, dstArchive, undefined, {
                         accept: "application/octet-stream",
+                        authorization: `Basic ${konvuAlphaDownloadSecret}`,
                     });
                     yield tc.extractTar(konvuTgz, dstFolder);
                 }
