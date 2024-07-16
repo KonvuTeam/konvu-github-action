@@ -43,7 +43,7 @@ export async function run(): Promise<void> {
 
     const extension = process.platform === "win32" ? "zip" : "tar.gz";
 
-    const url = `https://downloads.staging.konvu.com/konvu-sca/${konvuVersion}/konvu-static-analysis_${platArch}.${extension}`;
+    const url = `https://download.staging.konvu.com/konvu-sca/${konvuVersion}/konvu-static-analysis_${platArch}.${extension}`;
 
     const archiveFolder = await fs.mkdtemp(
       path.join(os.tmpdir(), "konvu-sca-archive-"),
