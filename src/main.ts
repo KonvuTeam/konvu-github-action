@@ -4,12 +4,12 @@ import * as exec from "@actions/exec";
 import * as path from "path";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
+import * as httpm from "@actions/http-client";
 
 const konvuToken = process.env.KONVU_TOKEN || core.getInput("konvu-token");
 const konvuAppName =
   process.env.KONVU_APP_NAME || core.getInput("konvu-app-name");
-const konvuVersion =
-  process.env.KONVU_VERSION || core.getInput("konvu-version");
+let konvuVersion = process.env.KONVU_VERSION || core.getInput("konvu-version");
 let konvuAlphaDownloadSecret =
   process.env.KONVU_ALPHA_DL_SECRET || core.getInput("konvu-alpha-dl-secret");
 
@@ -58,6 +58,20 @@ export async function run(): Promise<void> {
     }
 
     const extension = process.platform === "win32" ? "zip" : "tar.gz";
+
+    if (konvuVersion === "latest") {
+      const versionUrl =
+        "https://download.staging.konvu.com/konvu-sca/versions";
+      const http = new httpm.HttpClient(undefined, [], {
+        allowRetries: false,
+        headers: {
+          Authorization: `Basic ${konvuAlphaDownloadSecret}`,
+        },
+      });
+      const resp = await http.get(versionUrl);
+      konvuVersion = (await resp.readBody()).trim();
+      core.info(`Latest konvu-sca version is ${konvuVersion}`);
+    }
 
     const url = `https://download.staging.konvu.com/konvu-sca/${konvuVersion}/konvu-static-analysis_${platArch}.${extension}`;
 
