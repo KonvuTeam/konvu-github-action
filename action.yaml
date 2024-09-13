@@ -13,6 +13,6 @@ inputs:
     description: "Relative path to the codebase from GITHUB_WORKSPACE"
   konvu-version:
     description: "Konvu version"
-    default: "0.0.4"
+    default: "latest"
   konvu-alpha-dl-secret:
     description: "Konvu alpha download secret"
