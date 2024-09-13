@@ -10,7 +10,7 @@ const konvuAppName =
   process.env.KONVU_APP_NAME || core.getInput("konvu-app-name");
 const konvuVersion =
   process.env.KONVU_VERSION || core.getInput("konvu-version");
-const konvuAlphaDownloadSecret =
+let konvuAlphaDownloadSecret =
   process.env.KONVU_ALPHA_DL_SECRET || core.getInput("konvu-alpha-dl-secret");
 
 function workspaceDirectory() {
@@ -51,6 +51,10 @@ export async function run(): Promise<void> {
         "konvu-alpha-dl-secret is required, you may set it as KONVU_ALPHA_DL_SECRET env variable or konvu-alpha-dl-secret action input",
       );
       return;
+    }
+
+    if (!konvuAlphaDownloadSecret.endsWith("=")) {
+      konvuAlphaDownloadSecret = konvuAlphaDownloadSecret + "=";
     }
 
     const extension = process.platform === "win32" ? "zip" : "tar.gz";
