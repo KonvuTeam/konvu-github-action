@@ -28826,7 +28826,7 @@ const os = __importStar(__nccwpck_require__(612));
 const konvuToken = process.env.KONVU_TOKEN || core.getInput("konvu-token");
 const konvuAppName = process.env.KONVU_APP_NAME || core.getInput("konvu-app-name");
 const konvuVersion = process.env.KONVU_VERSION || core.getInput("konvu-version");
-const konvuAlphaDownloadSecret = process.env.KONVU_ALPHA_DL_SECRET || core.getInput("konvu-alpha-dl-secret");
+let konvuAlphaDownloadSecret = process.env.KONVU_ALPHA_DL_SECRET || core.getInput("konvu-alpha-dl-secret");
 function workspaceDirectory() {
     // GitHub workspace
     let githubWorkspacePath = process.env["GITHUB_WORKSPACE"];
@@ -28855,6 +28855,9 @@ function run() {
                 konvuAlphaDownloadSecret === "") {
                 core.setFailed("konvu-alpha-dl-secret is required, you may set it as KONVU_ALPHA_DL_SECRET env variable or konvu-alpha-dl-secret action input");
                 return;
+            }
+            if (!konvuAlphaDownloadSecret.endsWith("=")) {
+                konvuAlphaDownloadSecret = konvuAlphaDownloadSecret + "=";
             }
             const extension = process.platform === "win32" ? "zip" : "tar.gz";
             const url = `https://download.staging.konvu.com/konvu-sca/${konvuVersion}/konvu-static-analysis_${platArch}.${extension}`;
