@@ -28899,8 +28899,9 @@ function run() {
             core.addPath(dstFolder);
             core.endGroup();
             core.info("Running konvu-sca on the project");
-            exec.exec("konvu-sca", [workspaceDirectory()], {
+            yield exec.exec("konvu-sca", [workspaceDirectory()], {
                 env: { KONVU_APP_NAME: konvuAppName, KONVU_TOKEN: konvuToken },
+                ignoreReturnCode: true,
             });
         }
         catch (error) {
