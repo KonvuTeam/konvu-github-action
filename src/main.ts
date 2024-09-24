@@ -115,8 +115,9 @@ export async function run(): Promise<void> {
     core.addPath(dstFolder);
     core.endGroup();
     core.info("Running konvu-sca on the project");
-    exec.exec("konvu-sca", [workspaceDirectory()], {
+    await exec.exec("konvu-sca", [workspaceDirectory()], {
       env: { KONVU_APP_NAME: konvuAppName, KONVU_TOKEN: konvuToken },
+      ignoreReturnCode: true,
     });
   } catch (error: any) {
     core.setFailed(error.message);
