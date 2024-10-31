@@ -28828,6 +28828,7 @@ const konvuToken = process.env.KONVU_TOKEN || core.getInput("konvu-token");
 const konvuAppName = process.env.KONVU_APP_NAME || core.getInput("konvu-app-name");
 let konvuVersion = process.env.KONVU_VERSION || core.getInput("konvu-version");
 let konvuAlphaDownloadSecret = process.env.KONVU_ALPHA_DL_SECRET || core.getInput("konvu-alpha-dl-secret");
+const konvuBackendUrl = process.env.KONVU_BACKEND_URL || core.getInput("konvu-backend-url");
 function workspaceDirectory() {
     // GitHub workspace
     let githubWorkspacePath = process.env["GITHUB_WORKSPACE"];
@@ -28900,7 +28901,11 @@ function run() {
             core.endGroup();
             core.info("Running konvu-sca on the project");
             yield exec.exec("konvu-sca", [workspaceDirectory()], {
-                env: { KONVU_APP_NAME: konvuAppName, KONVU_TOKEN: konvuToken },
+                env: {
+                    KONVU_APP_NAME: konvuAppName,
+                    KONVU_TOKEN: konvuToken,
+                    KONVU_BACKEND_URL: konvuBackendUrl,
+                },
                 ignoreReturnCode: true,
             });
         }

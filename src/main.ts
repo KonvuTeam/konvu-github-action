@@ -12,6 +12,8 @@ const konvuAppName =
 let konvuVersion = process.env.KONVU_VERSION || core.getInput("konvu-version");
 let konvuAlphaDownloadSecret =
   process.env.KONVU_ALPHA_DL_SECRET || core.getInput("konvu-alpha-dl-secret");
+const konvuBackendUrl =
+  process.env.KONVU_BACKEND_URL || core.getInput("konvu-backend-url");
 
 function workspaceDirectory() {
   // GitHub workspace
@@ -116,7 +118,11 @@ export async function run(): Promise<void> {
     core.endGroup();
     core.info("Running konvu-sca on the project");
     await exec.exec("konvu-sca", [workspaceDirectory()], {
-      env: { KONVU_APP_NAME: konvuAppName, KONVU_TOKEN: konvuToken },
+      env: {
+        KONVU_APP_NAME: konvuAppName,
+        KONVU_TOKEN: konvuToken,
+        KONVU_BACKEND_URL: konvuBackendUrl,
+      },
       ignoreReturnCode: true,
     });
   } catch (error: any) {

@@ -14,5 +14,8 @@ inputs:
   konvu-version:
     description: "Konvu version"
     default: "latest"
+  konvu-backend-url:
+    description: "Konvu backend URL"
+    default: "https://sensors.staging.konvu.com"
   konvu-alpha-dl-secret:
     description: "Konvu alpha download secret"
