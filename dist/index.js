@@ -28827,7 +28827,6 @@ const httpm = __importStar(__nccwpck_require__(6255));
 const konvuToken = process.env.KONVU_TOKEN || core.getInput("konvu-token");
 const konvuAppName = process.env.KONVU_APP_NAME || core.getInput("konvu-app-name");
 let konvuVersion = process.env.KONVU_VERSION || core.getInput("konvu-version");
-let konvuAlphaDownloadSecret = process.env.KONVU_ALPHA_DL_SECRET || core.getInput("konvu-alpha-dl-secret");
 const konvuBackendUrl = process.env.KONVU_BACKEND_URL || core.getInput("konvu-backend-url");
 function workspaceDirectory() {
     // GitHub workspace
@@ -28853,41 +28852,37 @@ function run() {
                 core.setFailed("Unsupported platform or architecture");
                 return;
             }
-            if (konvuAlphaDownloadSecret === undefined ||
-                konvuAlphaDownloadSecret === "") {
-                core.setFailed("konvu-alpha-dl-secret is required, you may set it as KONVU_ALPHA_DL_SECRET env variable or konvu-alpha-dl-secret action input");
+            if (konvuToken === undefined || konvuToken === "") {
+                core.setFailed("konvu-token is required, you may set it as KONVU_TOKEN env variable or konvu-token action input");
                 return;
-            }
-            if (!konvuAlphaDownloadSecret.endsWith("=")) {
-                konvuAlphaDownloadSecret = konvuAlphaDownloadSecret + "=";
             }
             const extension = process.platform === "win32" ? "zip" : "tar.gz";
             if (konvuVersion === "latest") {
-                const versionUrl = "https://download.staging.konvu.com/konvu-sca/versions";
+                const versionUrl = "https://download.konvu.com/konvu-sca/versions";
                 const http = new httpm.HttpClient(undefined, [], {
                     allowRetries: false,
                     headers: {
-                        Authorization: `Basic ${konvuAlphaDownloadSecret}`,
+                        Authorization: `Bearer ${konvuToken}`,
                     },
                 });
                 const resp = yield http.get(versionUrl);
                 konvuVersion = (yield resp.readBody()).trim();
                 core.info(`Latest konvu-sca version is ${konvuVersion}`);
             }
-            const url = `https://download.staging.konvu.com/konvu-sca/${konvuVersion}/konvu-static-analysis_${platArch}.${extension}`;
+            const url = `https://download.konvu.com/konvu-sca/${konvuVersion}/konvu-static-analysis_${platArch}.${extension}`;
             const archiveFolder = yield fs.mkdtemp(path.join(os.tmpdir(), "konvu-sca-archive-"));
             const dstFolder = yield fs.mkdtemp(path.join(os.tmpdir(), "konvu-sca-"));
             try {
                 let dstArchive = path.join(archiveFolder, `konvu-sca.${extension}`);
                 core.info(`Downloading konvu-sca from ${url}`);
                 if (process.platform === "win32") {
-                    const konvuZip = yield tc.downloadTool(url, dstArchive, `Basic ${konvuAlphaDownloadSecret}`, {
+                    const konvuZip = yield tc.downloadTool(url, dstArchive, `Bearer ${konvuToken}`, {
                         accept: "application/octet-stream",
                     });
                     yield tc.extractZip(konvuZip, dstFolder);
                 }
                 else {
-                    const konvuTgz = yield tc.downloadTool(url, dstArchive, `Basic ${konvuAlphaDownloadSecret}`, {
+                    const konvuTgz = yield tc.downloadTool(url, dstArchive, `Bearer ${konvuToken}`, {
                         accept: "application/octet-stream",
                     });
                     yield tc.extractTar(konvuTgz, dstFolder);
