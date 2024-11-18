@@ -16,4 +16,4 @@ inputs:
     default: "latest"
   konvu-backend-url:
     description: "Konvu backend URL"
-    default: "https://sensors.staging.konvu.com"
+    default: "https://sensors.konvu.com"
